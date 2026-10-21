@@ -3,6 +3,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -20,6 +21,26 @@ namespace AdaptiveCards.Test
     [TestClass]
     public class XmlSerializationTests
     { 
+        [TestMethod]
+        public void TextBlockXmlRoundTrip_PreservesMutableTextAndFormatting()
+        {
+            var original = new AdaptiveTextBlock("café")
+            {
+                Weight = AdaptiveTextWeight.Bolder,
+                Wrap = true
+            };
+            var serializer = new XmlSerializer(typeof(AdaptiveTextBlock));
+            var writer = new StringWriter(CultureInfo.InvariantCulture);
+            serializer.Serialize(writer, original);
+            var roundTrip = (AdaptiveTextBlock)serializer.Deserialize(new StringReader(writer.ToString()));
+            Assert.AreEqual("café", roundTrip.Text);
+            Assert.AreEqual(AdaptiveTextWeight.Bolder, roundTrip.Weight);
+            Assert.IsTrue(roundTrip.Wrap);
+            roundTrip.Text = "edited";
+            Assert.AreEqual("edited", roundTrip.Text);
+            Assert.AreEqual("café", original.Text);
+        }
+
         [Ignore("These unit tests have been silently not running for years due to cardsToIgnore having an empty string in it. Somebody needs to figure out why they are failing spectarularly on AdaptiveColumn")]
         [TestMethod]
         public void VerifySerializationForAllScenarioFiles()

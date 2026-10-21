@@ -1,0 +1,10 @@
+{
+  "type": "AdaptiveCard",
+  "version": "1.3",
+  "body": [
+    { "type": "TextBlock", "text": "Adaptive Cards rendering smoke", "weight": "Bolder", "size": "Large", "wrap": true },
+    { "type": "TextBlock", "text": "Preserve **markdown**, resources, spacing and accents: café.", "wrap": true, "separator": true },
+    { "type": "Input.Text", "id": "name", "label": "Name", "value": "Ada" }
+  ],
+  "actions": [{ "type": "Action.Submit", "title": "Submit", "data": { "action": "smoke" } }]
+}

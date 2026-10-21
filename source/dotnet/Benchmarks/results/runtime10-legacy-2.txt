@@ -1,0 +1,15 @@
+Runtime=.NET 10.0.13; OS=Microsoft Windows 10.0.26200; Architecture=X64; ServerGC=False
+Asset=AdaptiveCards; Version=1.0.0.0; TFM=.NETStandard,Version=v2.0; Bytes=396800; Path=<repo>\source\dotnet\Benchmarks\AdaptiveCards.Performance\bin\Release\net10.0\AdaptiveCards.dll
+Asset=AdaptiveCards.Templating; Version=1.0.0.0; TFM=.NETStandard,Version=v2.0; Bytes=59392; Path=<repo>\source\dotnet\Benchmarks\AdaptiveCards.Performance\bin\Release\net10.0\AdaptiveCards.Templating.dll
+Asset=System.Text.Json; Version=10.0.0.0; TFM=.NETCoreApp,Version=v10.0; Bytes=1890088; Path=<dotnet>\shared\Microsoft.NETCore.App\10.0.13\System.Text.Json.dll
+Asset=Newtonsoft.Json; Version=13.0.0.0; TFM=.NETCoreApp,Version=v6.0; Bytes=712464; Path=<repo>\source\dotnet\Benchmarks\AdaptiveCards.Performance\bin\Release\net10.0\Newtonsoft.Json.dll
+text-functions; cold-ms=34.555; cold-bytes=52672
+text-functions; iterations=5000; us/op=6.645; bytes/op=4232; gen0=1; gen1=0; gen2=0; result-length=42
+parse-serialize; cold-ms=205.407; cold-bytes=3402136
+parse-serialize; iterations=2000; us/op=20870.181; bytes/op=1203547; gen0=192; gen1=191; gen2=18; result-length=232
+markdown; cold-ms=398.565; cold-bytes=1502032
+markdown; iterations=2000; us/op=72.644; bytes/op=25842; gen0=4; gen1=0; gen2=0; result-length=201
+template-new-expand; cold-ms=154.503; cold-bytes=1092768
+template-new-expand; iterations=500; us/op=445.772; bytes/op=148984; gen0=5; gen1=0; gen2=0; result-length=130
+template-repeated-expand; cold-ms=0.491; cold-bytes=129736
+template-repeated-expand; iterations=1000; us/op=364.003; bytes/op=129696; gen0=10; gen1=0; gen2=0; result-length=130

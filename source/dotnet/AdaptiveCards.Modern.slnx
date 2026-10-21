@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/Benchmarks/">
+    <Project Path="Benchmarks/AdaptiveCards.Performance/AdaptiveCards.Performance.csproj" />
+  </Folder>
+  <Folder Name="/Library/">
+    <Project Path="Library/AdaptiveCards.Templating/AdaptiveCards.Templating.csproj" />
+    <Project Path="Library/AdaptiveCards/AdaptiveCards.csproj" />
+  </Folder>
+  <Folder Name="/Library/AdaptiveCards.Net6/">
+    <Project Path="Library/AdaptiveCards.Net6/AdaptiveCards.csproj" />
+  </Folder>
+  <Folder Name="/Test/">
+    <Project Path="Test/AdaptiveCards.Templating.Test/AdaptiveCards.Templating.Test.csproj" />
+    <Project Path="Test/AdaptiveCards.Test/AdaptiveCards.Test.csproj" />
+  </Folder>
+</Solution>

@@ -21,6 +21,10 @@
         <dependency id="AdaptiveCards" version="3.0.2" exclude="Build,Analyzers" />
         <dependency id="System.Drawing.Common" version="8.0.8" exclude="Build,Analyzers" />
       </group>
+      <group targetFramework="net10.0-windows7.0">
+        <dependency id="AdaptiveCards" version="3.1.0" exclude="Build,Analyzers" />
+        <dependency id="System.Drawing.Common" version="8.0.8" exclude="Build,Analyzers" />
+      </group>
     </dependencies>
     <frameworkAssemblies>
       <frameworkAssembly assemblyName="PresentationCore" targetFramework=".NETFramework4.5.2" />
@@ -33,10 +37,14 @@
       <group targetFramework="net6.0-windows7.0">
         <frameworkReference name="Microsoft.WindowsDesktop.App.WPF" />
       </group>
+      <group targetFramework="net10.0-windows7.0">
+        <frameworkReference name="Microsoft.WindowsDesktop.App.WPF" />
+      </group>
     </frameworkReferences>
   </metadata>
   <files>
     <file src="..\Library\AdaptiveCards.Rendering.Wpf.Net6\bin\Release\net6.0-windows\AdaptiveCards.Rendering.Wpf.Net6.dll" target="lib\net6.0-windows7.0"/>
+    <file src="..\Library\AdaptiveCards.Rendering.Wpf.Net6\bin\Release\net10.0-windows\AdaptiveCards.Rendering.Wpf.Net6.dll" target="lib\net10.0-windows7.0"/>
 
     <file src="EULA-Windows.txt" target="\"/>
   </files>

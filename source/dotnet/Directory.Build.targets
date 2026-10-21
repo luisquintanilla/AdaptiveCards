@@ -1,0 +1,6 @@
+<Project>
+  <!-- Deliberately do not import machine- or checkout-parent build customization. -->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0' Or '$(TargetFramework)' == 'net10.0-windows' Or '$(TargetFramework)' == 'net10.0-windows7.0'">
+    <LangVersion>14.0</LangVersion>
+  </PropertyGroup>
+</Project>

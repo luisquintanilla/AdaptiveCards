@@ -1,0 +1,174 @@
+@page "/"
+@rendermode InteractiveServer
+@implements IDisposable
+@using System.Diagnostics
+@using System.Text.Json
+@using AdaptiveCards.Workbench.Agent
+@using AdaptiveCards.Workbench.State
+@inject WorkbenchSession Session
+@inject WorkbenchAgentClient Agent
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject ILogger<Home> Logger
+
+<PageTitle>Adaptive Cards workbench</PageTitle>
+<main>
+    <h1>Adaptive Cards workbench</h1>
+    <p>.NET 10 + Blazor + AG-UI. Local deterministic agent; no model or cloud account.</p>
+    <p>Revision <strong data-testid="revision">@Session.Revision</strong>. Drafts, committed card and proposed card stay separate.
+        Refreshing starts a new session. Export before leaving.</p>
+    <div class="toolbar">
+        <button @onclick="Commit">Validate and preview</button>
+        <button @onclick="() => RunAsync()" disabled="@_busy">Request proposal</button>
+        <button @onclick="Cancel" disabled="@(!_busy)">Cancel run</button>
+        <button @onclick="ExportAsync">Export draft</button>
+        <label>Reload card <InputFile OnChange="ReloadAsync" accept=".json,application/json" /></label>
+    </div>
+    <p role="status" data-testid="status">@_status</p>
+    @if (_error is not null) { <p role="alert">@_error</p> }
+    <div class="workspace">
+        <section>
+            <h2>Raw draft</h2>
+            <label for="card-json">Card JSON (unknown fields preserved)</label>
+            <textarea id="card-json" spellcheck="false" value="@Session.DraftCard" @oninput="EditCard"></textarea>
+            <label for="data-json">Template data</label>
+            <textarea id="data-json" class="data" spellcheck="false" value="@Session.DraftData" @oninput="EditData"></textarea>
+        </section>
+        <section>
+            <h2>Committed preview</h2>
+            <CardPreview Json="@_preview" OnAction="HandleActionAsync" TestId="committed-preview" />
+            <p class="diagnostics">.NET parser: @(_warnings.Length == 0 ? "no warnings" : string.Join("; ", _warnings))</p>
+        </section>
+        <section>
+            <h2>Pending proposal</h2>
+            @if (Session.Proposal is { } proposal)
+            {
+                <p>Base revision @proposal.BaseRevision; run <code>@proposal.RunId</code></p>
+                <CardPreview Json="@_proposalPreview" ReadOnly="true" TestId="proposal-preview" />
+                <button @onclick="Accept">Accept proposal</button>
+                <button @onclick="Reject">Reject proposal</button>
+            }
+            else { <p>No pending proposal. Agent changes never apply automatically.</p> }
+        </section>
+    </div>
+    <p class="diagnostics">Only Action.Submit operation demo.submit and Action.Execute verb demo.submit are allowed.
+        Links are inert; ShowCard and ToggleVisibility stay local. No real approvals or external side effects.</p>
+</main>
+
+@code {
+    private string _preview = "";
+    private string _proposalPreview = "";
+    private string[] _warnings = [];
+    private string _status = "Ready.";
+    private string? _error;
+    private bool _busy;
+    private bool _disposed;
+    private CancellationTokenSource? _run;
+    private readonly HashSet<string> _actions = [];
+
+    protected override void OnInitialized() => SetPreview(CardDocument.Validate(Session.CommittedCard, Session.CommittedData));
+
+    private void EditCard(ChangeEventArgs args) => Session.Edit(args.Value?.ToString() ?? "", Session.DraftData);
+    private void EditData(ChangeEventArgs args) => Session.Edit(Session.DraftCard, args.Value?.ToString() ?? "");
+    private void SetPreview(CardValidation validation) { _preview = validation.ExpandedJson; _warnings = validation.Warnings; }
+
+    private void Commit() => Guard(() => { SetPreview(Session.Commit()); _status = "Draft committed; preview updated."; });
+    private void Accept() => Guard(() => { SetPreview(Session.Accept()); _status = "Proposal accepted."; });
+    private void Reject() { Session.Reject(); _error = null; _status = "Proposal rejected; draft and committed card unchanged."; }
+    private void Cancel() { _run?.Cancel(); Session.Reject(); _status = "Cancelling run; draft preserved."; }
+
+    private void Guard(Action action)
+    {
+        _error = null;
+        try { action(); }
+        catch (Exception error) when (IsUserError(error)) { Report(error); }
+    }
+
+    private static bool IsUserError(Exception error) =>
+        error is JsonException or InvalidDataException or InvalidOperationException or AdaptiveSerializationException or ArgumentException;
+
+    private void Report(Exception error)
+    {
+        Logger.LogWarning(error, "Workbench operation failed");
+        _error = error.Message;
+    }
+
+    private async Task RunAsync(JsonElement? action = null, string? actionId = null)
+    {
+        if (_busy) return;
+        _error = null;
+        Session.Reject();
+        _run = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        _busy = true;
+        _status = "Streaming AG-UI run...";
+        var timer = Stopwatch.StartNew();
+        try
+        {
+            CardDocument.Validate(Session.DraftCard, Session.DraftData);
+            var endpoint = new Uri(new Uri(Navigation.BaseUri), "agent");
+            if (!endpoint.IsLoopback) throw new InvalidDataException("This demo requires a localhost URL.");
+            var runId = Guid.NewGuid().ToString("N");
+            var callId = actionId ?? Guid.NewGuid().ToString("N");
+            var request = new AgentRequest(Session.DocumentId, Session.Revision, Session.DraftCard, Session.DraftData, callId, action);
+            var proposal = await Agent.ProposeAsync(endpoint, request, Session.ThreadId, runId, _run.Token);
+            _run.Token.ThrowIfCancellationRequested();
+            if (_disposed) return;
+            if (Session.Offer(proposal, runId, callId))
+            {
+                _proposalPreview = CardDocument.Validate(proposal.CardJson, proposal.DataJson).ExpandedJson;
+                _status = $"Complete proposal received in {timer.ElapsedMilliseconds} ms. Accept or reject explicitly.";
+            }
+        }
+        catch (OperationCanceledException) { Session.Reject(); _status = "Run cancelled or timed out; draft preserved."; }
+        catch (Exception error) when (IsUserError(error) || error is HttpRequestException or IOException)
+        {
+            Session.Reject();
+            Report(error);
+        }
+        finally
+        {
+            _busy = false;
+            _run.Dispose();
+            _run = null;
+        }
+    }
+
+    private Task HandleActionAsync(CardPreview.CardAction action)
+    {
+        if (_busy) { _error = "A run is already active; this action was not sent."; return Task.CompletedTask; }
+        if (!_actions.Add(action.Id)) { _error = "Duplicate action ignored."; return Task.CompletedTask; }
+        try
+        {
+            if (Session.DraftCard != Session.CommittedCard || Session.DraftData != Session.CommittedData)
+                throw new InvalidDataException("Commit the current draft before submitting an action from the preview.");
+            var data = CardDocument.ParseObject(action.Data.GetRawText(), 8 * 1024);
+            var allowed = action.Type == "Action.Submit" && data["operation"]?.GetValue<string>() == "demo.submit" ||
+                action.Type == "Action.Execute" && action.Verb == "demo.submit";
+            if (!allowed) throw new InvalidDataException("Action blocked: only the inert demo.submit action is allowed.");
+            data["operation"] = "demo.submit";
+            return RunAsync(JsonSerializer.SerializeToElement(data), action.Id);
+        }
+        catch (Exception error) when (IsUserError(error)) { Report(error); return Task.CompletedTask; }
+    }
+
+    private async Task ExportAsync()
+    {
+        await using var module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/cardPreview.js");
+        await module.InvokeVoidAsync("download", "adaptive-card.json", Session.DraftCard);
+    }
+
+    private async Task ReloadAsync(InputFileChangeEventArgs args)
+    {
+        try
+        {
+            using var reader = new StreamReader(args.File.OpenReadStream(CardDocument.MaximumBytes));
+            var json = await reader.ReadToEndAsync();
+            CardDocument.Validate(json, Session.DraftData);
+            Session.Edit(json, Session.DraftData);
+            Commit();
+        }
+        catch (Exception error) when (IsUserError(error) || error is IOException) { Report(error); }
+    }
+
+    public void Dispose() { _disposed = true; _run?.Cancel(); }
+}

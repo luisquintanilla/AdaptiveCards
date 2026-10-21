@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
 
-    <TargetFrameworks>netstandard2.0;net6;net8</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net6;net8;net10.0</TargetFrameworks>
     <VersionPrefix>1.0.0</VersionPrefix>
     <VersionSuffix>$(VersionSuffix)</VersionSuffix>
     <Authors>Microsoft</Authors>
@@ -53,8 +53,9 @@
   <ItemGroup>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
     <PackageReference Include="Microsoft.Bot.AdaptiveExpressions.Core" Version="4.23.1" />
-    <PackageReference Include="PolySharp" Version="1.14.1" />
-    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="PolySharp" Version="1.14.1" PrivateAssets="all" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" Condition="'$(TargetFramework)' != 'net10.0'" />
+    <PackageReference Include="System.Text.Json" Version="10.0.0" Condition="'$(TargetFramework)' == 'net10.0'" />
   </ItemGroup>
 
   <ItemGroup>

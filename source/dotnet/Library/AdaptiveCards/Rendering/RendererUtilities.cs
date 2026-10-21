@@ -13,11 +13,19 @@ namespace AdaptiveCards.Rendering
     /// <summary>
     ///     Utility methods for dealing with body and binding
     /// </summary>
-    public static class RendererUtilities
+    public static partial class RendererUtilities
     {
+#if NET10_0_OR_GREATER
+        [GeneratedRegex(@"\{\{(?<func>DATE|TIME){1}\((?<date>[\d]{4}-[\d]{2}-[\d]{2}T[\d]{2}:[\d]{2}:[\d]{2}[Z+-].*?){1}(?:,\s*(?<hint>SHORT|LONG|COMPACT){1}\s*)??\)\}\}",
+            RegexOptions.ExplicitCapture)]
+        private static partial Regex CreateTextFunctionRegex();
+
+        private static readonly Regex TextFunctionRegex = CreateTextFunctionRegex();
+#else
         private static readonly Regex TextFunctionRegex =
             new Regex(@"\{\{(?<func>DATE|TIME){1}\((?<date>[\d]{4}-[\d]{2}-[\d]{2}T[\d]{2}:[\d]{2}:[\d]{2}[Z+-].*?){1}(?:,\s*(?<hint>SHORT|LONG|COMPACT){1}\s*)??\)\}\}",
                 RegexOptions.ExplicitCapture);
+#endif
 
         private static readonly Regex _regexBinding = new Regex(@"(?<property>\{\{\w+?\}\})+?",
             RegexOptions.ExplicitCapture);

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <SdkAssetFramework Condition="'$(UseLegacySdkAssets)' == 'true' Or '$(TargetFramework)' == 'net8.0'">netstandard2.0</SdkAssetFramework>
+    <SdkAssetFramework Condition="'$(SdkAssetFramework)' == ''">net10.0</SdkAssetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Library\AdaptiveCards\AdaptiveCards.csproj" SetTargetFramework="TargetFramework=$(SdkAssetFramework)" />
+    <ProjectReference Include="..\..\Library\AdaptiveCards.Templating\AdaptiveCards.Templating.csproj" SetTargetFramework="TargetFramework=$(SdkAssetFramework)" />
+  </ItemGroup>
+</Project>

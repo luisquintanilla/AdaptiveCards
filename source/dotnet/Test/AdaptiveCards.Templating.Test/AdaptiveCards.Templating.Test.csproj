@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net8.0;net10.0</TargetFrameworks>
 
     <IsPackable>false</IsPackable>
 
@@ -23,8 +23,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Library\AdaptiveCards.Templating\AdaptiveCards.Templating.csproj" />
-    <ProjectReference Include="..\..\Library\AdaptiveCards\AdaptiveCards.csproj" />
+    <ProjectReference Include="..\..\Library\AdaptiveCards.Templating\AdaptiveCards.Templating.csproj" Condition="'$(UseLegacySdkAssets)' != 'true'" />
+    <ProjectReference Include="..\..\Library\AdaptiveCards\AdaptiveCards.csproj" Condition="'$(UseLegacySdkAssets)' != 'true'" />
+    <ProjectReference Include="..\..\Library\AdaptiveCards.Templating\AdaptiveCards.Templating.csproj" Condition="'$(UseLegacySdkAssets)' == 'true'" SetTargetFramework="TargetFramework=netstandard2.0" />
+    <ProjectReference Include="..\..\Library\AdaptiveCards\AdaptiveCards.csproj" Condition="'$(UseLegacySdkAssets)' == 'true'" SetTargetFramework="TargetFramework=netstandard2.0" />
   </ItemGroup>
 
 </Project>

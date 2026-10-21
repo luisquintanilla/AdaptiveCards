@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0-windows7.0</TargetFramework>
+    <TargetFrameworks>net6.0-windows7.0;net10.0-windows</TargetFrameworks>
+    <UseWPF>true</UseWPF>
     <StartupObject>
     </StartupObject>
   </PropertyGroup>
@@ -13,7 +14,8 @@
     <PackageReference Include="Microsoft.Extensions.CommandLineUtils" Version="1.1.1" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Library\AdaptiveCards.Net6\AdaptiveCards.csproj" />
+    <ProjectReference Include="..\..\Library\AdaptiveCards.Net6\AdaptiveCards.csproj" Condition="'$(TargetFramework)' == 'net6.0-windows7.0'" />
+    <ProjectReference Include="..\..\Library\AdaptiveCards\AdaptiveCards.csproj" Condition="'$(TargetFramework)' == 'net10.0-windows'" />
     <ProjectReference Include="..\..\Library\AdaptiveCards.Rendering.Wpf.Net6\AdaptiveCards.Rendering.Wpf.Net6.csproj" />
   </ItemGroup>
 </Project>

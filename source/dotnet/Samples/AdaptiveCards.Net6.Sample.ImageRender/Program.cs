@@ -16,7 +16,7 @@ namespace AdaptiveCards.Core.Sample.ImageRender
 {
     class Program
     {
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
             var app = new CommandLineApplication();
 
@@ -78,16 +78,17 @@ namespace AdaptiveCards.Core.Sample.ImageRender
 
                 AdaptiveCardRenderer renderer = new AdaptiveCardRenderer(hostConfig);
 
+                bool succeeded = files.Count > 0;
                 foreach (var file in files)
                 {
-                    RenderCard(file, renderer, outPath).Wait();
+                    succeeded &= RenderCard(file, renderer, outPath).GetAwaiter().GetResult();
                 }
 
                 Console.WriteLine($"All cards were written to {Path.GetFullPath(outPath)}");
-                return 0;
+                return succeeded ? 0 : 1;
             });
 
-            app.Execute(args);
+            int exitCode = app.Execute(args);
 
 
             // if output, launch the file
@@ -95,9 +96,10 @@ namespace AdaptiveCards.Core.Sample.ImageRender
             {
                 Console.ReadLine();
             }
+            return exitCode;
         }
 
-        private static async Task RenderCard(string file, AdaptiveCardRenderer renderer, string outPath)
+        private static async Task<bool> RenderCard(string file, AdaptiveCardRenderer renderer, string outPath)
         {
             try
             {
@@ -108,7 +110,7 @@ namespace AdaptiveCards.Core.Sample.ImageRender
                 AdaptiveCard card = parseResult.Card;
 
                 // Timeout after 30 seconds
-                var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
                 // Render the card to an image
                 RenderedAdaptiveCardImage renderedCard = await renderer.RenderCardToImageAsync(card, true, 400, cts.Token);
@@ -128,10 +130,12 @@ namespace AdaptiveCards.Core.Sample.ImageRender
                     renderedCard.ImageStream.CopyTo(fileStream);
                     Console.WriteLine($"[{watch.ElapsedMilliseconds}ms T{Thread.CurrentThread.ManagedThreadId}]\t{Path.GetFileName(file)} => {Path.GetFileName(outputFile)}");
                 }
+                return true;
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"[FAILED]\t{Path.GetFileName(file)} => {ex.Message}");
+                return false;
             }
         }
     }

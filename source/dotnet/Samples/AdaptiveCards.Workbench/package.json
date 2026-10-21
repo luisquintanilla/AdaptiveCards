@@ -1,0 +1,9 @@
+{
+  "name": "adaptivecards-dotnet-workbench",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "node scripts/copy-renderer.mjs",
+    "test": "node --test tests/browser.test.mjs"
+  }
+}

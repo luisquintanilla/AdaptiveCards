@@ -2,65 +2,53 @@ name: $(Year:yy).$(Month).$(DayOfMonth).$(rev:r)
 
 pr:
   branches:
-    include:
-    - main
-    - feature/*
-    - release/*
-
+    include: [main, feature/*, release/*]
 trigger:
   branches:
-    include:
-    - main
-    - feature/*
-    - release/*
-  batch: True
-
-variables:
-  solution: source/dotnet/AdaptiveCards.sln
-  buildConfiguration: Release
-  buildPlatform: any cpu
+    include: [main, feature/*, release/*]
+  batch: true
 
 pool:
-  name: Azure Pipelines
-  vmImage: windows-2019
+  vmImage: windows-2022
 
 steps:
 - task: UseDotNet@2
-  displayName: 'Use .NET Core SDK'
+  displayName: Use pinned stable .NET SDK
   inputs:
-    version: 5.x
-- task: NuGetToolInstaller@0
-  displayName: 'Use NuGet 5.x'
+    packageType: sdk
+    useGlobalJson: true
+    workingDirectory: source/dotnet
+- task: UseDotNet@2
+  displayName: Install .NET 8 runtime for retained package consumer
   inputs:
-    versionSpec: 5.x
-- task: NuGetCommand@2
-  displayName: 'NuGet restore'
+    packageType: runtime
+    version: 8.0.x
+- pwsh: |
+    dotnet build AdaptiveCards.Modern.slnx -c Release --nologo
+    if ($LASTEXITCODE) { exit $LASTEXITCODE }
+    .\RunAllTests.ps1 -IncludeRendering -CollectCoverage
+  workingDirectory: source/dotnet
+  displayName: Build SDK and test modern/compatible assets on .NET 10
+- pwsh: |
+    dotnet build Samples\WPFVisualizerNet6\AdaptiveCards.Sample.WPFVisualizer.Net6.csproj -c Release -f net10.0-windows -p:PublicBuild=true --nologo
+    if ($LASTEXITCODE) { exit $LASTEXITCODE }
+    dotnet build Library\AdaptiveCards.Rendering.Wpf.Net6\AdaptiveCards.Rendering.Wpf.Net6.csproj -c Release -p:PublicBuild=true --nologo
+    if ($LASTEXITCODE) { exit $LASTEXITCODE }
+    .\NuGet\TestWpfReleaseGate.ps1
+    .\NuGet\PackSdk.ps1
+    .\NuGet\TestPackages.ps1
+  workingDirectory: source/dotnet
+  displayName: Build public desktop sample and verify actual packages
+- task: PublishTestResults@2
+  condition: succeededOrFailed()
   inputs:
-    restoreSolution: '$(solution)'
-    feedsToUse: config
-- task: VSBuild@1
-  displayName: 'Build solution source/dotnet/AdaptiveCards.sln'
+    testResultsFormat: VSTest
+    testResultsFiles: source/dotnet/TestResults/**/*.trx
+    failTaskOnFailedTests: true
+    failTaskOnMissingResultsFile: true
+- task: PublishPipelineArtifact@1
   inputs:
-    solution: '$(solution)'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-- task: VSTest@2
-  displayName: 'VsTest - testAssemblies'
-  inputs:
-    testAssemblyVer2: |
-     **\!(ref)\*.test.dll
-     !**\obj\**
-    searchFolder: '$(System.DefaultWorkingDirectory)\source\dotnet'
-    runInParallel: true
-    runTestsInIsolation: true
-    codeCoverageEnabled: true
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-    failOnMinTestsNotRun: true
-    diagnosticsEnabled: True
-- task: PowerShell@1
-  displayName: 'Run all tests'
-  inputs:
-    scriptName: source/dotnet/RunAllTests.ps1
+    targetPath: source/dotnet/artifacts/packages
+    artifact: dotnet-sdk-packages
 - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
-  displayName: 'Component Detection'
+  displayName: Component Detection

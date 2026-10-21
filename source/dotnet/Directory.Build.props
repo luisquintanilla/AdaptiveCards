@@ -1,0 +1,3 @@
+<Project>
+  <!-- Deliberately stop ancestor Directory.Build.props discovery at this SDK boundary. -->
+</Project>

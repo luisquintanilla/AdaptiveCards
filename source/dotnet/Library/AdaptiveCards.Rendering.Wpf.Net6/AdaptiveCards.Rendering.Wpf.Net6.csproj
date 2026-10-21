@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFrameworks>net6.0-windows;net10.0-windows</TargetFrameworks>
     <UseWPF>true</UseWPF>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <AssemblyName>AdaptiveCards.Rendering.Wpf.Net6</AssemblyName>
@@ -24,6 +24,13 @@
 
   </PropertyGroup>
 
+  <!-- Explicit opt-in for source-only builds without Microsoft's release signing key. -->
+  <PropertyGroup Condition="'$(PublicBuild)' == 'true'">
+    <SignAssembly>false</SignAssembly>
+    <DelaySign>false</DelaySign>
+    <AssemblyOriginatorKeyFile />
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
   <ItemGroup>
     <None Include="EULA-Windows.txt" Pack="true" PackagePath="\" />
   </ItemGroup>
@@ -42,6 +49,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AdaptiveCards.Net6\AdaptiveCards.csproj" />
+    <ProjectReference Include="..\AdaptiveCards.Net6\AdaptiveCards.csproj" Condition="'$(TargetFramework)' == 'net6.0-windows'" />
+    <ProjectReference Include="..\AdaptiveCards\AdaptiveCards.csproj" Condition="'$(TargetFramework)' == 'net10.0-windows'" />
   </ItemGroup>
 </Project>

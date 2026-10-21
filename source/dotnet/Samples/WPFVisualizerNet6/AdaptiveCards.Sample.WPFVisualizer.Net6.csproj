@@ -1,10 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFrameworks>net6.0-windows;net10.0-windows</TargetFrameworks>
     <OutputType>WinExe</OutputType>
     <RootNamespace>WpfVisualizer</RootNamespace>
     <AssemblyName>WpfVisualizer</AssemblyName>
-    <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(TargetFramework)' != 'net10.0-windows'">win10-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(TargetFramework)' == 'net10.0-windows'">win-x64</RuntimeIdentifier>
+    <UseRidGraph Condition="'$(TargetFramework)' != 'net10.0-windows'">true</UseRidGraph>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -57,7 +59,8 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Library\AdaptiveCards.Net6\AdaptiveCards.csproj" />
+    <ProjectReference Include="..\..\Library\AdaptiveCards.Net6\AdaptiveCards.csproj" Condition="'$(TargetFramework)' == 'net6.0-windows'" />
+    <ProjectReference Include="..\..\Library\AdaptiveCards\AdaptiveCards.csproj" Condition="'$(TargetFramework)' == 'net10.0-windows'" />
     <ProjectReference Include="..\..\Library\AdaptiveCards.Rendering.Wpf.Net6\AdaptiveCards.Rendering.Wpf.Net6.csproj" />
     <ProjectReference Include="..\..\Library\AdaptiveCards.Templating\AdaptiveCards.Templating.csproj" />
   </ItemGroup>
